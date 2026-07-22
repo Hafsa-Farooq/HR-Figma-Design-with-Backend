@@ -431,7 +431,7 @@ export default function EditEmployeePage() {
 
           <div className="mt-6 flex justify-end gap-3">
             <button
-              onClick={() => router.push("/employees")}
+              onClick={ ( ) => router.push("/employees")}
               className="h-10 rounded-md bg-gray-200 px-6 text-sm font-medium text-gray-600 hover:bg-gray-300"
             >
               Cancel
