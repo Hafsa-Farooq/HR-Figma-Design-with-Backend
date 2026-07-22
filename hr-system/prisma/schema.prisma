@@ -1,0 +1,97 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Branch {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  designations Designation[]
+  employees    Employee[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Department {
+  id           String        @id @default(cuid())
+  name         String        @unique
+  designations Designation[]
+  employees    Employee[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model Designation {
+  id           String     @id @default(cuid())
+  name         String
+  branch       Branch     @relation(fields: [branchId], references: [id])
+  branchId     String
+  department   Department @relation(fields: [departmentId], references: [id])
+  departmentId String
+  employees    Employee[]
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  @@unique([name, branchId, departmentId])
+}
+
+model Employee {
+  id           String    @id @default(cuid())
+  employeeCode String    @unique // e.g. #MZ-001
+
+  // Personal Detail
+  firstName    String
+  lastName     String
+  dateOfBirth  DateTime?
+  mobile       String
+  phone        String?
+  email        String    @unique
+  country      String?
+  state        String?
+  city         String?
+  zipCode      String?
+  linkedin     String?
+  profileImage String?
+  addressLine1 String?
+  addressLine2 String?
+
+  // Company Detail
+  branch        Branch      @relation(fields: [branchId], references: [id])
+  branchId      String
+  department    Department  @relation(fields: [departmentId], references: [id])
+  departmentId  String
+  designation   Designation @relation(fields: [designationId], references: [id])
+  designationId String
+  dateOfJoining DateTime?
+
+  // Bank Detail
+  bankName  String?
+  accountNo String?
+  swiftCode String?
+
+  // Document Detail
+  passportNo           String?
+  passportExpiry       DateTime?
+  passportFile         String?
+  workPermitNo         String?
+  workPermitExpiry     DateTime?
+  workPermitFile       String?
+  drivingLicenseNo     String?
+  drivingLicenseExpiry DateTime?
+  drivingLicenseFile   String?
+  nationalIdFile       String?
+  contractNo           String?
+  contractExpiry       DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}

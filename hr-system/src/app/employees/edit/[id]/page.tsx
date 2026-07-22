@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import Sidebar from "@/components/Sidebar";
 import DashboardHeader from "@/components/DashboardHeader";
 import FormCard from "@/components/FormCard";
@@ -49,27 +49,37 @@ const initialForm = {
   contractExpiry: "",
 };
 
-// HTML date inputs give "YYYY-MM-DD" only — Prisma's DateTime needs full ISO-8601
 function toISODate(dateStr: string): string | undefined {
   if (!dateStr) return undefined;
   return new Date(dateStr).toISOString();
 }
 
-export default function AddEmployeePage() {
+// Converts a full ISO datetime (from the DB) back to "YYYY-MM-DD" for <input type="date">
+function toDateInputValue(isoStr: string | null | undefined): string {
+  if (!isoStr) return "";
+  return isoStr.slice(0, 10);
+}
+
+export default function EditEmployeePage() {
   const router = useRouter();
+  const params = useParams();
+  const id = params.id as string;
+
   const [form, setForm] = useState(initialForm);
   const [branches, setBranches] = useState<Option[]>([]);
   const [departments, setDepartments] = useState<Option[]>([]);
   const [designations, setDesignations] = useState<Designation[]>([]);
+  const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    async function loadOptions() {
+    async function loadData() {
       try {
-        const [branchRes, deptRes, desigRes] = await Promise.all([
+        const [branchRes, deptRes, desigRes, empRes] = await Promise.all([
           fetch(`/api/branches`),
           fetch(`/api/departments`),
           fetch(`/api/designations`),
+          fetch(`/api/employees/${id}`),
         ]);
 
         setBranches(branchRes.ok ? await branchRes.json() : []);
@@ -86,12 +96,49 @@ export default function AddEmployeePage() {
               }))
             : []
         );
+
+        if (empRes.ok) {
+          const emp = await empRes.json();
+          setForm({
+            firstName: emp.firstName ?? "",
+            lastName: emp.lastName ?? "",
+            dateOfBirth: toDateInputValue(emp.dateOfBirth),
+            mobile: emp.mobile ?? "",
+            phone: emp.phone ?? "",
+            email: emp.email ?? "",
+            country: emp.country ?? "",
+            state: emp.state ?? "",
+            city: emp.city ?? "",
+            zipCode: emp.zipCode ?? "",
+            linkedin: emp.linkedin ?? "",
+            addressLine1: emp.addressLine1 ?? "",
+            addressLine2: emp.addressLine2 ?? "",
+            employeeCode: emp.employeeCode ?? "",
+            branchId: emp.branchId ?? "",
+            departmentId: emp.departmentId ?? "",
+            designationId: emp.designationId ?? "",
+            dateOfJoining: toDateInputValue(emp.dateOfJoining),
+            bankName: emp.bankName ?? "",
+            accountNo: emp.accountNo ?? "",
+            swiftCode: emp.swiftCode ?? "",
+            passportNo: emp.passportNo ?? "",
+            passportExpiry: toDateInputValue(emp.passportExpiry),
+            workPermitNo: emp.workPermitNo ?? "",
+            workPermitExpiry: toDateInputValue(emp.workPermitExpiry),
+            drivingLicenseNo: emp.drivingLicenseNo ?? "",
+            drivingLicenseExpiry: toDateInputValue(emp.drivingLicenseExpiry),
+            contractNo: emp.contractNo ?? "",
+            contractExpiry: toDateInputValue(emp.contractExpiry),
+          });
+        }
       } catch (error) {
-        console.error("Failed to load dropdown options:", error);
+        console.error("Failed to load employee:", error);
+      } finally {
+        setLoading(false);
       }
     }
-    loadOptions();
-  }, []);
+    loadData();
+  }, [id]);
 
   function updateField(field: keyof typeof initialForm, value: string) {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -122,8 +169,8 @@ export default function AddEmployeePage() {
         contractExpiry: toISODate(form.contractExpiry),
       };
 
-      const res = await fetch(`/api/employees`, {
-        method: "POST",
+      const res = await fetch(`/api/employees/${id}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
@@ -146,6 +193,20 @@ export default function AddEmployeePage() {
     }
   }
 
+  if (loading) {
+    return (
+      <div className="flex min-h-screen bg-[#F5F6FA]">
+        <Sidebar />
+        <div className="flex-1">
+          <DashboardHeader />
+          <main className="px-8 pb-10">
+            <p className="text-sm text-gray-400">Loading...</p>
+          </main>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen bg-[#F5F6FA]">
       <Sidebar />
@@ -157,7 +218,7 @@ export default function AddEmployeePage() {
           <p className="mb-6 flex h-[22px] items-center gap-1 text-sm text-gray-400">
             <span className="text-[#00A2CA]">Home</span>
             <span>&gt;</span>
-            <span className="text-gray-900">Add Employee</span>
+            <span className="text-gray-900">Edit Employee</span>
           </p>
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
@@ -380,7 +441,7 @@ export default function AddEmployeePage() {
               disabled={submitting}
               className="h-10 rounded-md bg-[#00A2CA] px-6 text-sm font-medium text-white hover:bg-[#0090b3] disabled:opacity-50"
             >
-              {submitting ? "Saving..." : "Save Employee"}
+              {submitting ? "Saving..." : "Update Employee"}
             </button>
           </div>
         </main>

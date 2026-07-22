@@ -1,17 +1,34 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+
+interface Branch {
+  id: string;
+  name: string;
+}
+
+interface Department {
+  id: string;
+  name: string;
+}
+
+interface EditingDesignation {
+  id: string;
+  name: string;
+  branchId: string;
+  departmentId: string;
+}
 
 interface AddDesignationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  branches?: string[];
-  departments?: string[];
-  onAdd?: (data: {
-    branchName: string;
-    department: string;
-    designationName: string;
-  }) => void;
+  branches?: Branch[];
+  departments?: Department[];
+  editingDesignation?: EditingDesignation | null;
+  onSubmit?: (
+    data: { branchId: string; departmentId: string; name: string },
+    id?: string
+  ) => void;
 }
 
 export default function AddDesignationModal({
@@ -19,87 +36,93 @@ export default function AddDesignationModal({
   onClose,
   branches = [],
   departments = [],
-  onAdd,
+  editingDesignation = null,
+  onSubmit,
 }: AddDesignationModalProps) {
-  const [branchName, setBranchName] = useState("");
-  const [department, setDepartment] = useState("");
+  const [branchId, setBranchId] = useState("");
+  const [departmentId, setDepartmentId] = useState("");
   const [designationName, setDesignationName] = useState("");
+
+  const isEditMode = !!editingDesignation;
+
+  useEffect(() => {
+    if (editingDesignation) {
+      setBranchId(editingDesignation.branchId);
+      setDepartmentId(editingDesignation.departmentId);
+      setDesignationName(editingDesignation.name);
+    } else {
+      setBranchId("");
+      setDepartmentId("");
+      setDesignationName("");
+    }
+  }, [editingDesignation, isOpen]);
 
   if (!isOpen) return null;
 
   const resetAndClose = () => {
-    setBranchName("");
-    setDepartment("");
+    setBranchId("");
+    setDepartmentId("");
     setDesignationName("");
     onClose();
   };
 
-  const handleAdd = () => {
-    onAdd?.({ branchName, department, designationName });
+  const handleSubmit = () => {
+    onSubmit?.(
+      { branchId, departmentId, name: designationName },
+      editingDesignation?.id
+    );
     resetAndClose();
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30">
-      {/* Modal card: 796 x 298, radius 10, white bg, soft blue-tinted shadow */}
       <div
         className="w-[796px] max-w-[92vw] rounded-[10px] bg-white p-4"
-        style={{
-          boxShadow: "0px 6px 30px 0px rgba(134, 186, 203, 0.3)",
-        }}
+        style={{ boxShadow: "0px 6px 30px 0px rgba(134, 186, 203, 0.3)" }}
       >
-        {/* Header with left accent bar */}
         <div className="flex items-center gap-2 border-l-4 border-[#00A2CA] pl-3 pb-4">
           <h2 className="text-lg font-semibold text-gray-800">
-            Add Designation
+            {isEditMode ? "Edit Designation" : "Add Designation"}
           </h2>
         </div>
 
-        {/* Fields */}
         <div className="flex flex-col gap-3 px-1">
-          {/* Branch Name */}
           <div className="relative">
             <select
-              value={branchName}
-              onChange={(e) => setBranchName(e.target.value)}
+              value={branchId}
+              onChange={(e) => setBranchId(e.target.value)}
               className="h-[34px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-500 focus:border-[#00A2CA] focus:outline-none"
             >
               <option value="" disabled>
                 Branch Name
               </option>
               {branches.map((b) => (
-                <option key={b} value={b}>
-                  {b}
+                <option key={b.id} value={b.id}>
+                  {b.name}
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              ▾
-            </span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
           </div>
 
-          {/* Department */}
           <div className="relative">
             <select
-              value={department}
-              onChange={(e) => setDepartment(e.target.value)}
+              value={departmentId}
+              onChange={(e) => setDepartmentId(e.target.value)}
               className="h-[34px] w-full appearance-none rounded-md border border-gray-300 bg-white px-3 text-sm text-gray-500 focus:border-[#00A2CA] focus:outline-none"
             >
               <option value="" disabled>
                 Department
               </option>
               {departments.map((d) => (
-                <option key={d} value={d}>
-                  {d}
+                <option key={d.id} value={d.id}>
+                  {d.name}
                 </option>
               ))}
             </select>
-            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">
-              ▾
-            </span>
+            <span className="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-gray-400">▾</span>
           </div>
 
-          {/* Designation Name */}
           <input
             type="text"
             value={designationName}
@@ -109,7 +132,6 @@ export default function AddDesignationModal({
           />
         </div>
 
-        {/* Actions */}
         <div className="mt-5 flex justify-end gap-3 px-1">
           <button
             onClick={resetAndClose}
@@ -118,11 +140,11 @@ export default function AddDesignationModal({
             Cancel
           </button>
           <button
-            onClick={handleAdd}
-            disabled={!branchName || !department || !designationName}
+            onClick={handleSubmit}
+            disabled={!branchId || !departmentId || !designationName}
             className="h-9 w-[113px] rounded-md bg-[#00A2CA] text-sm font-medium text-white hover:bg-[#0090b3] transition-colors disabled:cursor-not-allowed disabled:opacity-50"
           >
-            Add
+            {isEditMode ? "Save" : "Add"}
           </button>
         </div>
       </div>

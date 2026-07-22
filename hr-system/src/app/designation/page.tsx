@@ -12,9 +12,7 @@ export default function DesignationPage() {
 
         <main className="px-8 pb-10">
           <p className="mb-6 text-sm text-gray-400">
-           
-                <span className="text-[#00A2CA]">Home</span> &gt; <span className="text-gray-900">Designation</span>
-
+            <span className="text-[#00A2CA]">Home</span> &gt; <span className="text-gray-900">Designation</span>
           </p>
 
           <DesignationTable />
@@ -23,10 +21,3 @@ export default function DesignationPage() {
     </div>
   );
 }
-import AddDesignationModal from "@/components/designation/AddDesignationModal";
-
-<AddDesignationModal
-  branches={["Canada", "Dubai", "KSA", "Pakistan"]}
-  departments={["Technology", "HR", "Finance"]}
-  onAdd={(data) => console.log(data)}
-/>
